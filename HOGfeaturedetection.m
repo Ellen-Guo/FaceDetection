@@ -1,4 +1,4 @@
-img = imread('girl.tif');
+img = imread('1.pgm');
 [F, M] = HOG(img);
 H = HOGpicture(M, 9);
 [featureVector,hogVisualization] = extractHOGFeatures(img);
