@@ -14,59 +14,84 @@ personToQuery = 30;
 galleryImage = read(facedatabase(personToQuery),1);
 figure;
 for i = 1:size(facedatabase,2)
-    imagegallery = montage(facedatabase(i).ImageLocation(1));
+    imagegallery{i} = facedatabase(i).ImageLocation(1);
+%     imds = imageDatastore(imagegallery);
+%     imageLabeler(imds);
 end
+subplot(1,2,1); imshow(galleryImage); title("Query Image");
+subplot(1,2,2);montage(string(imagegallery));title("All Image");
+
 
 %% Splitting Database into Training and Testing sets
 % [training, testing] = partition(facedatabase,[0.8 0.2]);
 PD = 0.80;
 N = size(facedatabase,1);
-idx = randperm(N);
+idx = 1;
 training = facedatabase(idx(1:round(N*PD)),:);
-testing = facedatabase(idx(round(N*PD)+1:end),:);
+testing = facedatabase(idx(round(N*PD):end),:);
 
 %% Extract and display Histogram of Oriented Gradient Features for Single Face
 person = 5; 
-[hogFeature, visualization] = extractHOGFeatures(read(training(person),1));
-%H = HOGpicture(visualization,11);
+%[hogFeature, visualization] = extractHOGFeatures(read(training(person),1));
+[hogFeature, visualization] = HOG(read(training(person),1));
+H = HOGpicture(visualization,9);
 figure;
 subplot (1,2,1); imshow(read(training(person),1)); title('Input Image');
-%subplot (1,2,2); imshow(H); title('histogram image');
-subplot (1,2,2); plot(visualization);title('HOG Feature');
+subplot (1,2,2); imshow(H); title('histogram image');
+%subplot (1,2,2); plot(visualization);title('HOG Feature');
 
 %% Extract HOG Features for Training set
-trainingFeatures = zeros(size(training,2)*training(1).Count,4680);
+trainingFeatures = zeros(size(training,2)*training(1).Count,2520);
 featureCount = 1;
 for i = 1:size(training,2)
     for j = 1:training(i).Count
-        trainingFeatures(featureCount,:) = extractHOGFeatures(read(training(i),1));
+        %trainingFeatures(featureCount,:) = extractHOGFeatures(read(training(i),1));
+        %[trainingFeatures,trainingvisualization] = HOG(read(training(i),1));
+        trainingFeatures(featureCount,:) = HOG(read(training(i),1));
         trainingLabel{featureCount} = training(i).Description;
         featureCount = featureCount+1;
     end 
     personIndex{i} = training(i).Description;
 end
 
-% trainingFeatures1 = zeros(size(training,2)*training(1).Count,4680);
-% featureCount = 1;
-% for i = 1:size(training,2)
-%     for j = 1:training(i).Count
-%         trainingFeatures(featureCount,:) = extractHOGFeatures(read(training(i),1));
-%         trainingLabel{featureCount} = training(i).Description;
-%         featureCount = featureCount+1;
-%     end 
-%     personIndex{i} = training(i).Description;
-% end
 %% Create 40 class classifier using fitcecoc
 faceClassifier = fitcecoc(trainingFeatures,trainingLabel);
 
-%% Test Image from Test set
-person = 1;
-[queryFeatures,queryvisualization] = extractHOGFeatures(read(testing(person),1));
+%% Testing for a single image
+person = 40;
+[queryFeatures,queryVisualization] = HOG(read(testing(person),1));
 personLabel = predict(faceClassifier,queryFeatures);
 booleanIndex = strcmp(personLabel, personIndex);
 integerIndex = find(booleanIndex);
-subplot(1,2,1); imshow(queryImage);title('Query Face');
+figure;
+sgtitle('Singular testing');
+subplot(1,2,1); imshow(read(testing(person),1));title('Query Face');
 subplot(1,2,2); imshow(read(training(integerIndex),1));title('Match Class');
+
+
+%% Test Image from Test set
+counter = 0;
+position = 0;
+figure;
+% sgtitle('Testing set of 5 images');
+for person = 1:5
+    p = 10;
+    i = randsample(p,1);
+    p1 = 10;
+    randomp = randsample(p1,1);
+    [queryFeatures,queryVisualization] = HOG(read(testing(randomp),i));
+    personLabel = predict(faceClassifier,queryFeatures);
+    booleanIndex = strcmp(personLabel, personIndex);
+    integerIndex = find(booleanIndex);
+    counter = counter+1;
+    count = num2str(counter);
+    position = position+1;
+    subplot(5,2,position); imshow(imresize(read(testing(randomp),i),3));title(append('Query Image ', count));
+    position = position+1;
+    subplot(5,2,position); imshow(read(training(integerIndex),1));title(append('Match Class ',training(integerIndex).Description));
+    %disp(training(integerIndex));
+end
+
 
 %% HOG filter implementation
 % img = imread('girl.tif');
