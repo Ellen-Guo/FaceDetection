@@ -3,10 +3,15 @@ img = imread('girl.tif');
 H = HOGpicture(M, 9);
 [featureVector,hogVisualization] = extractHOGFeatures(img);
 figure
-subplot(1,2,1)
+imshow(img);
+title('Original');
+figure
+subplot(1,3,2)
 imshow(H);
-subplot(1,2,2)
+title('Self Implementation');
+figure
 plot(hogVisualization);
+title('MATLAB Built-in');
 
 function [feature, matrix] = HOG(image)
 [mu, theta] = grad(image); %gradient mag. and ang. of image
@@ -93,7 +98,7 @@ end
 function z = bin_c(j)
 z = 20*(j + (1/2));
 end
-%% Visualize the HOGFeature *** Code for Github ***
+%% Visualize the HOGFeature *** Code for Github by rbgirshick (Ross Girshick)***
 function im = HOGpicture(w, bs)
     % Make picture of positive HOG weights.
     %   im = HOGpicture(w, bs)
